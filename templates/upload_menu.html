@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Subir archivos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #222; }
+        h1 { margin-bottom: 8px; }
+        .nav { display: flex; gap: 12px; margin-bottom: 20px; }
+        .nav a { color: #0b6bcb; text-decoration: none; font-weight: 600; }
+        .nav a:hover { text-decoration: underline; }
+        .card { border: 1px solid #ddd; border-radius: 6px; padding: 16px; margin-bottom: 12px; max-width: 640px; }
+        .card h3 { margin-top: 0; margin-bottom: 6px; }
+        .card p { margin: 0 0 8px 0; }
+        .card a { color: #0b6bcb; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/">Inicio</a>
+        <a href="/faltantes/">Productos con faltantes</a>
+        <a href="/pvp/faltantes/">PVP con issues</a>
+        <a href="/subidas/">Subir archivos</a>
+    </nav>
+    <h1>Subir archivos</h1>
+    <p>Selecciona el tipo de carga que quieres realizar.</p>
+
+    {% for item in uploads %}
+        <div class="card">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description }}</p>
+            <a href="{{ item.url }}">Ir a esta carga</a>
+        </div>
+    {% endfor %}
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Normalizar salidas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #222; }
+        h1 { margin-bottom: 12px; }
+        .card { border: 1px solid #ddd; padding: 16px; border-radius: 6px; max-width: 640px; background: #f8f8f8; margin-bottom: 12px; }
+        .nav { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav a { color: #0b6bcb; text-decoration: none; font-weight: 600; }
+        .nav a:hover { text-decoration: underline; }
+        table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+        th, td { border: 1px solid #ddd; padding: 8px; font-size: 14px; }
+        th { background: #f0f0f0; text-align: left; }
+        .error { color: #b00020; }
+        .ok { color: #0a7c2f; }
+        .btn { padding: 10px 16px; background: #0a7c2f; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/">Inicio</a>
+        <a href="/subidas/">Subidas</a>
+        <a href="/salidas/">Salidas</a>
+        <a href="/salidas/normalizar/">Normalizar salidas</a>
+    </nav>
+
+    <h1>Normalizar salidas</h1>
+    <div class="card">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <div>Pendientes: <strong>{{ summary.pending }}</strong></div>
+            <div>Normalizados: <strong>{{ summary.ok }}</strong></div>
+            <div>Con error: <strong>{{ summary.error }}</strong></div>
+            <div>Total crudos: <strong>{{ summary.total }}</strong></div>
+        </div>
+    </div>
+
+    <form method="get" style="margin-bottom: 12px; display: inline-flex; gap: 8px; align-items: center;">
+        <label for="fecha_salida">Fecha:</label>
+        <select id="fecha_salida" name="fecha_salida" {% if not dates %}disabled{% endif %}>
+            {% for d in dates %}
+                <option value="{{ d|date:'Y-m-d' }}" {% if d == selected_date %}selected{% endif %}>{{ d|date:'Y-m-d' }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn" type="submit">Ver</button>
+    </form>
+    {% if not dates %}
+        <div class="card" style="display: inline-block; margin-left: 8px;">No hay salidas cargadas.</div>
+    {% elif selected_date %}
+        <div class="card" style="display: inline-block; margin-left: 8px;">Normalizando fecha: <strong>{{ selected_date }}</strong></div>
+    {% endif %}
+
+    <form method="post" style="margin-bottom: 16px;">
+        {% csrf_token %}
+        <input type="hidden" name="fecha_salida" value="{{ selected_date }}" />
+        <button class="btn" type="submit" {% if summary.pending == 0 and summary.error == 0 %}disabled{% endif %}>
+            Normalizar pendientes
+        </button>
+    </form>
+
+    {% if ran %}
+    <div class="card" style="margin-bottom: 16px;">
+        <div>Procesados: {{ run_result.processed }}</div>
+        <div class="ok">Creados: {{ run_result.created }}</div>
+        <div class="ok">Actualizados: {{ run_result.updated }}</div>
+        <div class="error">Errores: {{ run_result.errors }}</div>
+    </div>
+    {% endif %}
+
+    <h2>Pendientes recientes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Salida</th>
+                <th>SKU</th>
+                <th>Sucursal origen</th>
+                <th>Sucursal destino</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in pending %}
+            <tr>
+                <td>{{ r.fecha_salida }}</td>
+                <td>{{ r.salida }}</td>
+                <td>{{ r.sku }}</td>
+                <td>{{ r.nombre_sucursal_origen }}</td>
+                <td>{{ r.nombre_sucursal_destino }}</td>
+                <td>{{ r.normalize_status }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">Sin pendientes.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Errores recientes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Salida</th>
+                <th>SKU</th>
+                <th>Sucursal origen</th>
+                <th>Notas</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in errors %}
+            <tr>
+                <td>{{ r.fecha_salida }}</td>
+                <td>{{ r.salida }}</td>
+                <td>{{ r.sku }}</td>
+                <td>{{ r.nombre_sucursal_origen }}</td>
+                <td class="error">{{ r.normalize_notes }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">Sin errores.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

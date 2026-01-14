@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Subir Salidas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #222; }
+        h1 { margin-bottom: 8px; }
+        form { margin-bottom: 24px; }
+        .card { border: 1px solid #ddd; padding: 16px; border-radius: 6px; max-width: 720px; }
+        .error { color: #b00020; margin-top: 8px; }
+        table { border-collapse: collapse; margin-top: 16px; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 6px 10px; }
+        th { background: #f4f4f4; }
+        .summary { margin-top: 24px; }
+        .nav { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav a { color: #0b6bcb; text-decoration: none; font-weight: 600; }
+        .nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/">Inicio</a>
+        <a href="/subidas/">Subidas</a>
+        <a href="/planificacion/">Planificación</a>
+        <a href="/salidas/">Salidas</a>
+    </nav>
+
+    <h1>Subir Salidas</h1>
+    <p>El archivo debe tener una sola hoja; se previsualiza y luego se importa.</p>
+
+    <div class="card" id="upload">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="file">Archivo Excel (.xlsx):</label><br />
+            <input type="file" id="file" name="file" accept=".xlsx" required />
+            <br /><br />
+            <button type="submit" name="step" value="preview">Previsualizar</button>
+            <button type="submit" name="step" value="import">Importar</button>
+            <div style="font-size: 12px; color: #555; margin-top: 4px;">Nota: el navegador no conserva el archivo entre envíos; vuelve a elegirlo si importas tras previsualizar.</div>
+        </form>
+        {% if errors %}
+            <div class="error">
+                {% for err in errors %}
+                    <div>{{ err }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% if summary %}
+        <div class="summary">
+            <h2>Información del archivo</h2>
+            <p>Archivo: <strong>{{ summary.filename }}</strong></p>
+            <p>Hojas encontradas: {{ summary.sheet_count }} (usando: <strong>{{ summary.sheet_name }}</strong>)</p>
+            {% if summary.target_month %}
+                <p>Mes detectado: <strong>{{ summary.target_month }}</strong></p>
+            {% endif %}
+            {% if summary.created_entries or summary.updated_entries %}
+                <p>Filas creadas: <strong>{{ summary.created_entries }}</strong> · Filas actualizadas: <strong>{{ summary.updated_entries }}</strong></p>
+            {% endif %}
+            {% if summary.skipped_rows or summary.skipped_wrong_month or summary.skipped_no_date %}
+                <p>Omitidas vacías: <strong>{{ summary.skipped_rows }}</strong> · Omitidas por otro mes: <strong>{{ summary.skipped_wrong_month }}</strong> · Omitidas sin fecha: <strong>{{ summary.skipped_no_date }}</strong></p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if preview_headers %}
+        <div class="summary">
+            <h2>Previsualización (primeras 10 filas)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        {% for h in preview_headers %}<th>{{ h }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview_rows %}
+                        <tr>
+                            {% for cell in row %}<td>{{ cell }}</td>{% endfor %}
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="{{ preview_headers|length }}">Sin datos</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</body>
+</html>

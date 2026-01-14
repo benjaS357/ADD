@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PVP con faltantes y duplicados</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #222; }
+        h1 { margin-bottom: 8px; }
+        h2 { margin-top: 24px; margin-bottom: 8px; }
+        .summary { margin: 12px 0 16px; }
+        table { border-collapse: collapse; width: 100%; max-width: 1200px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #f4f4f4; text-align: left; }
+        .missing { color: #b00020; font-weight: 600; }
+        .badge { display: inline-block; padding: 2px 6px; background: #eee; border-radius: 4px; margin-left: 4px; font-size: 12px; }
+        a { color: #0b6bcb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .filters { margin: 12px 0 16px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; max-width: 520px; }
+        .filters label { margin-right: 12px; }
+        .filters button { margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <h1>PVP con faltantes y duplicados</h1>
+    <div class="summary">
+        <span class="badge"><a href="/">Volver a carga</a></span>
+        <span class="badge"><a href="/faltantes/">Productos con faltantes</a></span>
+    </div>
+
+    <form method="get" class="filters">
+        <div><strong>Ocultar columnas:</strong></div>
+        {% for field in optional_fields %}
+            <label>
+                <input type="checkbox" name="hide" value="{{ field }}" {% if field in hidden_fields %}checked{% endif %}>
+                {{ field|capfirst }}
+            </label>
+        {% endfor %}
+        <div>
+            <button type="submit">Aplicar</button>
+            <a href="/pvp/faltantes/" style="margin-left: 8px;">Mostrar todas</a>
+        </div>
+    </form>
+
+    <h2>Faltantes ({{ missing_total }})</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>SKU</th>
+                {% if "description" in visible_fields %}<th>Descripción</th>{% endif %}
+                {% if "price" in visible_fields %}<th>Precio</th>{% endif %}
+                {% if "product" in visible_fields %}<th>Producto</th>{% endif %}
+                <th>Campos faltantes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if missing_rows %}
+                {% for p, missing in missing_rows %}
+                    <tr>
+                        <td>{{ p.sku }}</td>
+                        {% if "description" in visible_fields %}<td class="{% if not p.description %}missing{% endif %}">{{ p.description|default:"(vacío)" }}</td>{% endif %}
+                        {% if "price" in visible_fields %}<td class="{% if p.price is not None and p.price <= 0 %}missing{% endif %}">{{ p.price }}</td>{% endif %}
+                        {% if "product" in visible_fields %}<td class="{% if not p.product %}missing{% endif %}">{% if p.product %}{{ p.product.code }} - {{ p.product.name }}{% else %}(sin producto){% endif %}</td>{% endif %}
+                        <td>
+                            {% if missing %}
+                                {% for f in missing %}
+                                    <span class="badge">{{ f }}</span>
+                                {% endfor %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="{{ visible_fields|length|add:'2' }}">No hay registros con datos faltantes.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <h2>Duplicados por SKU ({{ duplicate_groups }})</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>ID</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Producto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if duplicates %}
+                {% for sku, rows in duplicates.items %}
+                    {% for row in rows %}
+                        <tr>
+                            {% if forloop.first %}
+                                <td rowspan="{{ rows|length }}">{{ sku }}</td>
+                            {% endif %}
+                            <td>{{ row.id }}</td>
+                            <td>{{ row.description }}</td>
+                            <td>{{ row.price }}</td>
+                            <td>{% if row.product %}{{ row.product.code }} - {{ row.product.name }}{% else %}(sin producto){% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="5">No hay duplicados.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cargar Excel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #222; }
+        h1 { margin-bottom: 8px; }
+        form { margin-bottom: 24px; }
+        .card { border: 1px solid #ddd; padding: 16px; border-radius: 6px; max-width: 520px; }
+        .error { color: #b00020; margin-top: 8px; }
+        table { border-collapse: collapse; margin-top: 16px; }
+        th, td { border: 1px solid #ddd; padding: 6px 10px; }
+        th { background: #f4f4f4; }
+        .summary { margin-top: 24px; }
+        .nav { display: flex; gap: 12px; margin-bottom: 20px; }
+        .nav a { color: #0b6bcb; text-decoration: none; font-weight: 600; }
+        .nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/">Inicio</a>
+        <a href="/faltantes/">Productos con faltantes</a>
+        <a href="/pvp/faltantes/">PVP con issues</a>
+        <a href="/subidas/">Subir archivos</a>
+        <a href="#upload">Subir Excel</a>
+    </nav>
+    <h1>Cargar Excel</h1>
+    <p>Sube un archivo .xlsx con las hojas "Maestro de Productos" y "PVP" para poblar las tablas.</p>
+
+    <div class="card" id="upload">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label for="file">Archivo Excel (.xlsx):</label><br />
+            <input type="file" id="file" name="file" accept=".xlsx" required />
+            <br /><br />
+            <button type="submit">Subir y procesar</button>
+        </form>
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    {% if summary %}
+        <div class="summary">
+            <h2>Resumen de carga</h2>
+            <table>
+                <tr><th colspan="3">Maestro de Productos</th></tr>
+                <tr><td>Creado</td><td>{{ summary.products.created }}</td></tr>
+                <tr><td>Actualizado</td><td>{{ summary.products.updated }}</td></tr>
+                <tr><td>Omitido</td><td>{{ summary.products.skipped }}</td></tr>
+            </table>
+            <br />
+            <table>
+                <tr><th colspan="4">PVP</th></tr>
+                <tr><td>Creado</td><td>{{ summary.pvp.created }}</td></tr>
+                <tr><td>Actualizado</td><td>{{ summary.pvp.updated }}</td></tr>
+                <tr><td>Omitido</td><td>{{ summary.pvp.skipped }}</td></tr>
+                <tr><td>Sin producto</td><td>{{ summary.pvp.missing_product }}</td></tr>
+            </table>
+        </div>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Productos con datos faltantes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #222; }
+        h1 { margin-bottom: 8px; }
+        .summary { margin: 12px 0 20px; }
+        table { border-collapse: collapse; width: 100%; max-width: 1200px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #f4f4f4; text-align: left; }
+        .missing { color: #b00020; font-weight: 600; }
+        .badge { display: inline-block; padding: 2px 6px; background: #eee; border-radius: 4px; margin-left: 6px; font-size: 12px; }
+        a { color: #0b6bcb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .filters { margin: 12px 0 16px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; max-width: 520px; }
+        .filters label { margin-right: 12px; }
+        .filters button { margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Productos con datos faltantes</h1>
+    <div class="summary">
+        <strong>Total mostrados:</strong> {{ total }}
+        <span class="badge">Campos opcionales: {{ optional_fields|join:", " }}</span>
+        <span class="badge">Duplicados: {{ duplicate_groups }}</span>
+        <span class="badge"><a href="/">Volver a carga</a></span>
+    </div>
+
+    <form method="get" class="filters">
+        <div><strong>Ocultar columnas:</strong></div>
+        {% for field in optional_fields %}
+            <label>
+                <input type="checkbox" name="hide" value="{{ field }}" {% if field in hidden_fields %}checked{% endif %}>
+                {{ field|capfirst }}
+            </label>
+        {% endfor %}
+        <div>
+            <button type="submit">Aplicar</button>
+            <a href="/faltantes/" style="margin-left: 8px;">Mostrar todas</a>
+        </div>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                {% if "group" in visible_fields %}<th>Grupo</th>{% endif %}
+                {% if "manufacturer" in visible_fields %}<th>Fabricante</th>{% endif %}
+                {% if "category" in visible_fields %}<th>Categoría</th>{% endif %}
+                {% if "subcategory" in visible_fields %}<th>Subcategoría</th>{% endif %}
+                {% if "size" in visible_fields %}<th>Tamaño</th>{% endif %}
+                <th>Campos faltantes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if rows %}
+                {% for p, missing in rows %}
+                    <tr>
+                        <td>{{ p.code }}</td>
+                        <td>{{ p.name }}</td>
+                        {% if "group" in visible_fields %}<td class="{% if not p.group %}missing{% endif %}">{{ p.group|default:"(vacío)" }}</td>{% endif %}
+                        {% if "manufacturer" in visible_fields %}<td class="{% if not p.manufacturer %}missing{% endif %}">{{ p.manufacturer|default:"(vacío)" }}</td>{% endif %}
+                        {% if "category" in visible_fields %}<td class="{% if not p.category %}missing{% endif %}">{{ p.category|default:"(vacío)" }}</td>{% endif %}
+                        {% if "subcategory" in visible_fields %}<td class="{% if not p.subcategory %}missing{% endif %}">{{ p.subcategory|default:"(vacío)" }}</td>{% endif %}
+                        {% if "size" in visible_fields %}<td class="{% if not p.size %}missing{% endif %}">{{ p.size|default:"(vacío)" }}</td>{% endif %}
+                        <td>
+                            {% if missing %}
+                                {% for f in missing %}
+                                    <span class="badge">{{ f }}</span>
+                                {% endfor %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="{{ visible_fields|length|add:'3' }}">No hay productos con datos faltantes.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <h2>Duplicados por código ({{ duplicate_groups }})</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>ID</th>
+                <th>Nombre</th>
+                {% if "group" in visible_fields %}<th>Grupo</th>{% endif %}
+                {% if "manufacturer" in visible_fields %}<th>Fabricante</th>{% endif %}
+                {% if "category" in visible_fields %}<th>Categoría</th>{% endif %}
+                {% if "subcategory" in visible_fields %}<th>Subcategoría</th>{% endif %}
+                {% if "size" in visible_fields %}<th>Tamaño</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% if duplicates %}
+                {% for code, rows_dup in duplicates.items %}
+                    {% for row in rows_dup %}
+                        <tr>
+                            {% if forloop.first %}
+                                <td rowspan="{{ rows_dup|length }}">{{ code }}</td>
+                            {% endif %}
+                            <td>{{ row.id }}</td>
+                            <td>{{ row.name }}</td>
+                            {% if "group" in visible_fields %}<td>{{ row.group }}</td>{% endif %}
+                            {% if "manufacturer" in visible_fields %}<td>{{ row.manufacturer }}</td>{% endif %}
+                            {% if "category" in visible_fields %}<td>{{ row.category }}</td>{% endif %}
+                            {% if "subcategory" in visible_fields %}<td>{{ row.subcategory }}</td>{% endif %}
+                            {% if "size" in visible_fields %}<td>{{ row.size }}</td>{% endif %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="{{ visible_fields|length|add:'3' }}">No hay duplicados.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</body>
+</html>
